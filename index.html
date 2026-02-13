@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CMYK Paint Ratio Mixer (Fixed - No Negative White)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f8f8f8;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 { color: #333; }
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    #colorPreview {
+      width: 180px;
+      height: 180px;
+      margin: 20px auto;
+      border: 3px solid #aaa;
+      border-radius: 12px;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+    }
+    .ratio {
+      font-size: 1.3em;
+      margin: 12px 0;
+      padding: 12px;
+      background: #f0f8ff;
+      border-radius: 8px;
+    }
+    label { font-weight: bold; margin-right: 10px; }
+    input[type="color"] {
+      width: 80px;
+      height: 50px;
+      border: none;
+      cursor: pointer;
+    }
+    #targetHex { font-family: monospace; font-size: 1.3em; margin: 10px 0; }
+    small { color: #666; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>CMYK Paint Ratio Calculator (with Black & White - Fixed)</h1>
+    <p>Pick a color → get realistic ratios of Cyan : Magenta : Yellow : Black : White.<br>
+       White never goes negative. For bright colors, use little/no white to keep intensity high.<br>
+       Good for ~10 ml mixes using BEHR/Glidden paints + black + white/base.</p>
+
+    <label for="colorPicker">Pick target color:</label>
+    <input type="color" id="colorPicker" value="#ff0000" />
+
+    <div id="colorPreview"></div>
+
+    <div id="targetHex">#ff0000</div>
+
+    <div class="ratio">
+      <strong>Cyan:</strong> <span id="cyanRatio">0%</span> (~<span id="cyanMl">0.0</span> ml)
+    </div>
+    <div class="ratio">
+      <strong>Magenta:</strong> <span id="magentaRatio">0%</span> (~<span id="magentaMl">0.0</span> ml)
+    </div>
+    <div class="ratio">
+      <strong>Yellow:</strong> <span id="yellowRatio">0%</span> (~<span id="yellowMl">0.0</span> ml)
+    </div>
+    <div class="ratio">
+      <strong>Black:</strong> <span id="blackRatio">0%</span> (~<span id="blackMl">0.0</span> ml)
+    </div>
+    <div class="ratio">
+      <strong>White/Base:</strong> <span id="whiteRatio">0%</span> (~<span id="whiteMl">0.0</span> ml)
+    </div>
+
+    <p><small>Note: For vivid/bright colors (e.g. pure red), expect low/no white to preserve saturation. Real paint may still need small tweaks due to pigment differences. Test batches!</small></p>
+  </div>
+
+  <script>
+    const picker = document.getElementById('colorPicker');
+    const preview = document.getElementById('colorPreview');
+    const hexDisplay = document.getElementById('targetHex');
+
+    const cyanEl    = document.getElementById('cyanRatio');
+    const magentaEl  = document.getElementById('magentaRatio');
+    const yellowEl   = document.getElementById('yellowRatio');
+    const blackEl    = document.getElementById('blackRatio');
+    const whiteEl    = document.getElementById('whiteRatio');
+
+    const cyanMlEl   = document.getElementById('cyanMl');
+    const magentaMlEl = document.getElementById('magentaMl');
+    const yellowMlEl  = document.getElementById('yellowMl');
+    const blackMlEl   = document.getElementById('blackMl');
+    const whiteMlEl   = document.getElementById('whiteMl');
+
+    function rgbToCmyk(r, g, b) {
+      let rn = r / 255;
+      let gn = g / 255;
+      let bn = b / 255;
+
+      let c = 1 - rn;
+      let m = 1 - gn;
+      let y = 1 - bn;
+
+      let k = Math.min(c, m, y, 1);
+
+      if (k >= 1) {
+        return 0, 0, 0, 100, 0; // pure black
+      }
+
+      c = (c - k) / (1 - k);
+      m = (m - k) / (1 - k);
+      y = (y - k) / (1 - k);
+
+      c = Math.max(0, Math.min(1, c));
+      m = Math.max(0, Math.min(1, m));
+      y = Math.max(0, Math.min(1, y));
+
+      let cPct = Math.round(c * 100);
+      let mPct = Math.round(m * 100);
+      let yPct = Math.round(y * 100);
+      let kPct = Math.round(k * 100);
+
+      let totalInk = cPct + mPct + yPct + kPct;
+
+      let wPct = 100 - totalInk;
+
+      // Fix if totalInk > 100 (rounding/saturation issue) → scale CMYK down, white >=0
+      if (totalInk > 100) {
+        const scale = 100 / totalInk;
+        cPct = Math.round(cPct * scale);
+        mPct = Math.round(mPct * scale);
+        yPct = Math.round(yPct * scale);
+        kPct = Math.round(kPct * scale);
+        wPct = 100 - (cPct + mPct + yPct + kPct);
+      }
+
+      // Final clamp & rounding fix (white never negative)
+      wPct = Math.max(0, wPct);
+      let finalSum = cPct + mPct + yPct + kPct + wPct;
+      if (finalSum !== 100) {
+        wPct += 100 - finalSum; // adjust white
+      }
+
+      return { c: cPct, m: mPct, y: yPct, k: kPct, w: wPct };
+    }
+
+    function updateFromColor(hex) {
+      let r = parseInt(hex.slice(1,3), 16);
+      let g = parseInt(hex.slice(3,5), 16);
+      let b = parseInt(hex.slice(5,7), 16);
+
+      preview.style.backgroundColor = hex;
+      hexDisplay.textContent = hex.toUpperCase();
+
+      const { c, m, y, k, w } = rgbToCmyk(r, g, b);
+
+      cyanEl.textContent    = c + '%';
+      magentaEl.textContent  = m + '%';
+      yellowEl.textContent   = y + '%';
+      blackEl.textContent    = k + '%';
+      whiteEl.textContent    = w + '%';
+
+      cyanMlEl.textContent    = (c / 10).toFixed(1);
+      magentaMlEl.textContent  = (m / 10).toFixed(1);
+      yellowMlEl.textContent   = (y / 10).toFixed(1);
+      blackMlEl.textContent    = (k / 10).toFixed(1);
+      whiteMlEl.textContent    = (w / 10).toFixed(1);
+    }
+
+    updateFromColor(picker.value);
+    picker.addEventListener('input', (e) => updateFromColor(e.target.value));
+  </script>
+</body>
+</html>
