@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CMYK Paint Ratio Mixer (Saved Colors)</title>
+  <title>CMYK Paint Ratio Mixer with HEX Input</title>
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #f8f8f8;
       text-align: center;
-      padding: 20px;
+      padding: 15px;
       margin: 0;
     }
     h1 { color: #333; margin-bottom: 10px; }
@@ -36,29 +36,32 @@
       background: #f0f8ff;
       border-radius: 8px;
     }
-    label { font-weight: bold; margin-right: 8px; }
+    .input-row {
+      margin: 15px 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
     input[type="color"] {
       width: 70px;
       height: 45px;
       border: none;
       cursor: pointer;
-      vertical-align: middle;
+      border-radius: 6px;
     }
-    #targetHex { font-family: monospace; font-size: 1.2em; margin: 8px 0; }
-    #saveSection {
-      margin: 20px 0;
-      padding: 15px;
-      background: #f9f9f9;
-      border-radius: 10px;
-    }
-    #colorName { 
-      padding: 8px; 
-      width: 180px; 
-      margin-right: 10px; 
-      font-size: 1em; 
+    #hexInput {
+      padding: 10px 12px;
+      font-size: 1.1em;
+      font-family: monospace;
+      width: 140px;
+      text-align: center;
+      border: 2px solid #ccc;
+      border-radius: 6px;
     }
     button {
-      padding: 8px 16px;
+      padding: 10px 16px;
       font-size: 1em;
       cursor: pointer;
       border: none;
@@ -67,60 +70,55 @@
       color: white;
     }
     button:hover { background: #45a049; }
-    #savedColors {
-      margin-top: 20px;
-      max-height: 300px;
-      overflow-y: auto;
-      padding: 10px;
-      background: #f0f0f0;
-      border-radius: 8px;
-      text-align: left;
-    }
+    #saveSection { margin: 20px 0; padding: 15px; background: #f9f9f9; border-radius: 10px; }
+    #colorName { padding: 10px; width: 200px; font-size: 1em; }
+    #savedColors { margin-top: 25px; max-height: 320px; overflow-y: auto; padding: 10px; background: #f0f0f0; border-radius: 8px; text-align: left; }
     .saved-item {
       display: flex;
       align-items: center;
-      padding: 8px;
+      padding: 10px;
       margin: 6px 0;
       background: white;
       border-radius: 6px;
       cursor: pointer;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.1);
     }
     .saved-item:hover { background: #e8f4ff; }
     .saved-swatch {
-      width: 36px;
-      height: 36px;
+      width: 40px;
+      height: 40px;
       border: 1px solid #ccc;
       border-radius: 4px;
       margin-right: 12px;
     }
-    small { color: #555; font-size: 0.9em; }
+    small { color: #555; }
     @media (max-width: 500px) {
       #colorPreview { width: 140px; height: 140px; }
-      .ratio { font-size: 1.1em; padding: 8px; }
+      .ratio { font-size: 1.1em; }
+      .input-row { flex-direction: column; }
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>CMYK Paint Ratio Mixer</h1>
-    <p>Pick a color → see Cyan : Magenta : Yellow : Black : White ratios for mixing \~10 ml.<br>
-       Save your favorites for quick access.</p>
+    <p>Pick or type a HEX color → get mixing ratios for ~10 ml total.</p>
 
-    <label for="colorPicker">Pick color:</label>
-    <input type="color" id="colorPicker" value="#808080" />
+    <div class="input-row">
+      <label>Color:</label>
+      <input type="color" id="colorPicker" value="#808080" />
+      <input type="text" id="hexInput" value="#808080" maxlength="7" placeholder="#RRGGBB" />
+    </div>
 
     <div id="colorPreview"></div>
-    <div id="targetHex">#808080</div>
 
-    <div class="ratio"><strong>Cyan:</strong> <span id="cyanRatio">0%</span> (\~<span id="cyanMl">0.0</span> ml)</div>
-    <div class="ratio"><strong>Magenta:</strong> <span id="magentaRatio">0%</span> (\~<span id="magentaMl">0.0</span> ml)</div>
-    <div class="ratio"><strong>Yellow:</strong> <span id="yellowRatio">0%</span> (\~<span id="yellowMl">0.0</span> ml)</div>
-    <div class="ratio"><strong>Black:</strong> <span id="blackRatio">0%</span> (\~<span id="blackMl">0.0</span> ml)</div>
-    <div class="ratio"><strong>White/Base:</strong> <span id="whiteRatio">0%</span> (\~<span id="whiteMl">0.0</span> ml)</div>
+    <div class="ratio"><strong>Cyan:</strong> <span id="cyanRatio">0%</span> (~<span id="cyanMl">0.0</span> ml)</div>
+    <div class="ratio"><strong>Magenta:</strong> <span id="magentaRatio">0%</span> (~<span id="magentaMl">0.0</span> ml)</div>
+    <div class="ratio"><strong>Yellow:</strong> <span id="yellowRatio">0%</span> (~<span id="yellowMl">0.0</span> ml)</div>
+    <div class="ratio"><strong>Black:</strong> <span id="blackRatio">0%</span> (~<span id="blackMl">0.0</span> ml)</div>
+    <div class="ratio"><strong>White/Base:</strong> <span id="whiteRatio">0%</span> (~<span id="whiteMl">0.0</span> ml)</div>
 
     <div id="saveSection">
-      <input type="text" id="colorName" placeholder="Name this color (e.g. Bright Red)" />
+      <input type="text" id="colorName" placeholder="Name this color (optional)" />
       <button id="saveBtn">Save Color</button>
     </div>
 
@@ -129,43 +127,50 @@
       <div id="savedList"></div>
     </div>
 
-    <p><small>For vivid colors: expect low/no white to keep intensity high.<br>
-       Real paint mixing varies—test small batches! Use BEHR/Glidden + black + white/base.</small></p>
+    <p><small>Tip: On mobile, tap the color swatch for visual picker or type/paste HEX directly.<br>
+       For bright colors expect low or zero white.</small></p>
   </div>
 
   <script>
     const picker = document.getElementById('colorPicker');
+    const hexInput = document.getElementById('hexInput');
     const preview = document.getElementById('colorPreview');
-    const hexDisplay = document.getElementById('targetHex');
     const saveBtn = document.getElementById('saveBtn');
     const colorNameInput = document.getElementById('colorName');
     const savedList = document.getElementById('savedList');
 
-    const cyanEl    = document.getElementById('cyanRatio');
-    const magentaEl  = document.getElementById('magentaRatio');
-    const yellowEl   = document.getElementById('yellowRatio');
-    const blackEl    = document.getElementById('blackRatio');
-    const whiteEl    = document.getElementById('whiteRatio');
+    const cyanEl = document.getElementById('cyanRatio');
+    const magentaEl = document.getElementById('magentaRatio');
+    const yellowEl = document.getElementById('yellowRatio');
+    const blackEl = document.getElementById('blackRatio');
+    const whiteEl = document.getElementById('whiteRatio');
 
-    const cyanMlEl   = document.getElementById('cyanMl');
+    const cyanMlEl = document.getElementById('cyanMl');
     const magentaMlEl = document.getElementById('magentaMl');
-    const yellowMlEl  = document.getElementById('yellowMl');
-    const blackMlEl   = document.getElementById('blackMl');
-    const whiteMlEl   = document.getElementById('whiteMl');
+    const yellowMlEl = document.getElementById('yellowMl');
+    const blackMlEl = document.getElementById('blackMl');
+    const whiteMlEl = document.getElementById('whiteMl');
 
-    // Load saved colors from localStorage
     let savedColors = JSON.parse(localStorage.getItem('savedPaintColors')) || [];
+
+    function isValidHex(hex) {
+      return /^#?[0-9A-Fa-f]{6}$/.test(hex);
+    }
+
+    function normalizeHex(hex) {
+      if (!hex.startsWith('#')) hex = '#' + hex;
+      return hex.toUpperCase();
+    }
 
     function rgbToCmyk(r, g, b) {
       let rn = r / 255, gn = g / 255, bn = b / 255;
       let c = 1 - rn, m = 1 - gn, y = 1 - bn;
       let k = Math.min(c, m, y, 1);
-
       if (k >= 1) return { c: 0, m: 0, y: 0, k: 100, w: 0 };
 
-      c = (c - k) / (1 - k) || 0;
-      m = (m - k) / (1 - k) || 0;
-      y = (y - k) / (1 - k) || 0;
+      c = Math.max(0, (c - k) / (1 - k) || 0);
+      m = Math.max(0, (m - k) / (1 - k) || 0);
+      y = Math.max(0, (y - k) / (1 - k) || 0);
 
       let cPct = Math.round(c * 100);
       let mPct = Math.round(m * 100);
@@ -185,63 +190,70 @@
       }
 
       wPct = Math.max(0, wPct);
-      let finalSum = cPct + mPct + yPct + kPct + wPct;
-      if (finalSum !== 100) wPct += 100 - finalSum;
+      let sum = cPct + mPct + yPct + kPct + wPct;
+      if (sum !== 100) wPct += 100 - sum;
 
       return { c: cPct, m: mPct, y: yPct, k: kPct, w: wPct };
     }
 
-    function updateFromColor(hex) {
-      let r = parseInt(hex.slice(1,3), 16);
-      let g = parseInt(hex.slice(3,5), 16);
-      let b = parseInt(hex.slice(5,7), 16);
+    function updateFromHex(hex) {
+      if (!isValidHex(hex)) return;
+      hex = normalizeHex(hex);
 
+      picker.value = hex;
+      hexInput.value = hex;
       preview.style.backgroundColor = hex;
-      hexDisplay.textContent = hex.toUpperCase();
+
+      const r = parseInt(hex.slice(1,3), 16);
+      const g = parseInt(hex.slice(3,5), 16);
+      const b = parseInt(hex.slice(5,7), 16);
 
       const { c, m, y, k, w } = rgbToCmyk(r, g, b);
 
-      cyanEl.textContent    = c + '%';    cyanMlEl.textContent    = (c / 10).toFixed(1);
-      magentaEl.textContent  = m + '%';   magentaMlEl.textContent  = (m / 10).toFixed(1);
-      yellowEl.textContent   = y + '%';   yellowMlEl.textContent   = (y / 10).toFixed(1);
-      blackEl.textContent    = k + '%';   blackMlEl.textContent    = (k / 10).toFixed(1);
-      whiteEl.textContent    = w + '%';   whiteMlEl.textContent    = (w / 10).toFixed(1);
+      cyanEl.textContent = c + '%';    cyanMlEl.textContent = (c / 10).toFixed(1);
+      magentaEl.textContent = m + '%'; magentaMlEl.textContent = (m / 10).toFixed(1);
+      yellowEl.textContent = y + '%';  yellowMlEl.textContent = (y / 10).toFixed(1);
+      blackEl.textContent = k + '%';   blackMlEl.textContent = (k / 10).toFixed(1);
+      whiteEl.textContent = w + '%';   whiteMlEl.textContent = (w / 10).toFixed(1);
     }
 
     function renderSavedColors() {
       savedList.innerHTML = '';
-      savedColors.forEach((item, index) => {
+      savedColors.forEach(item => {
         const div = document.createElement('div');
         div.className = 'saved-item';
         div.innerHTML = `
           <div class="saved-swatch" style="background:${item.hex}"></div>
-          <span>\( {item.name} ( \){item.hex})</span>
+          <span>${item.name} — ${item.hex}</span>
         `;
-        div.onclick = () => {
-          picker.value = item.hex;
-          updateFromColor(item.hex);
-        };
+        div.onclick = () => updateFromHex(item.hex);
         savedList.appendChild(div);
       });
     }
 
-    // Save current color
+    // Event listeners
+    picker.addEventListener('input', () => updateFromHex(picker.value));
+    hexInput.addEventListener('input', () => {
+      let val = hexInput.value.trim();
+      if (isValidHex(val)) updateFromHex(val);
+    });
+    hexInput.addEventListener('blur', () => {
+      let val = hexInput.value.trim();
+      if (isValidHex(val)) updateFromHex(val);
+    });
+
     saveBtn.onclick = () => {
       const hex = picker.value;
-      let name = colorNameInput.value.trim();
-      if (!name) name = `Color ${savedColors.length + 1}`;
-
+      let name = colorNameInput.value.trim() || `Color ${savedColors.length + 1}`;
       savedColors.push({ name, hex });
       localStorage.setItem('savedPaintColors', JSON.stringify(savedColors));
       renderSavedColors();
-      colorNameInput.value = ''; // clear input
+      colorNameInput.value = '';
     };
 
-    // Initial setup
-    updateFromColor(picker.value);
+    // Initial load
+    updateFromHex('#808080');
     renderSavedColors();
-
-    picker.addEventListener('input', (e) => updateFromColor(e.target.value));
   </script>
 </body>
 </html>
